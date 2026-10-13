@@ -1,9 +1,12 @@
+import 'package:bananal/screans/venda/Vendas.dart';
 import 'package:flutter/material.dart';
 import '../services/venda_service.dart';
 import '../model/venda_model.dart';
-import 'cadastrarVenda.dart';
+import 'venda/cadastrarVenda.dart';
 import '../widgets/cabecalho.dart';
 import '../widgets/menu.dart';
+import 'venda/cadastrarVenda.dart';
+
 
 class TelaHome extends StatefulWidget {
   @override
@@ -13,9 +16,21 @@ class TelaHome extends StatefulWidget {
 }
 
 class _TelaHomeState extends State<TelaHome> {
+
+  //------direcionar para venda---------
+  void verVendas() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => TelaVendas()),
+    ).then((_) {
+      setState(() {});
+    });
+  }
   @override
   Widget build(BuildContext context) {
     num receita = VendaService.receita();
+
+
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
@@ -44,6 +59,7 @@ class _TelaHomeState extends State<TelaHome> {
         ],
       ),
       bottomNavigationBar: menu(
+        itemAtivo: 0,
         onAdicionarPressed: () {
           Navigator.push(
             context,
@@ -84,6 +100,7 @@ class _TelaHomeState extends State<TelaHome> {
 
   Widget _cardReceita(num receita){
     return _cardIndicador(
+      onTap: () => verVendas(),
       titulo: "Receita",
       valor: "R\$ $receita",
       cor: Colors.green,
@@ -104,31 +121,41 @@ class _TelaHomeState extends State<TelaHome> {
     required String titulo,
     required String valor,
     required Color cor,
-    required IconData icone
+    required IconData icone,
+    VoidCallback? onTap,   // novo, opcional
   })
   {
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cor.withOpacity(0.1),
+    return Material(
+      color: cor.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icone, color: cor),
-              SizedBox(width: 4),
-              Text(titulo, style: TextStyle(color: cor)),
+              Row(
+                children: [
+                  Icon(icone, color: cor),
+                  SizedBox(width: 4),
+                  Text(titulo, style: TextStyle(color: cor)),
+                ],
+              ),
+              SizedBox(height: 8),
+              Text(
+                valor,
+                style: TextStyle(
+                  color: cor,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
-          SizedBox(height: 8),
-          Text(valor, style: TextStyle(color: cor ,fontSize: 20, fontWeight: FontWeight.bold)),
-        ],
+        ),
       ),
-
     );
-
   }
 }

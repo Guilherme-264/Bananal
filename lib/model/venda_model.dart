@@ -1,15 +1,19 @@
 class Venda{
   String? id;
-  String comprador;
-  int pesoCaixa;
-  int quantidadeCaixa;
-  num valorCaixa;
+  final String comprador;
+  final int pesoCaixa;
+  final int quantidadeCaixa;
+  final double valorCaixa;
+  final DateTime data;
+
 
   Venda({
-    this.id,
     required this.comprador,
     required this.pesoCaixa,
     required this.quantidadeCaixa,
     required this.valorCaixa,
-  });
+    DateTime? data,
+  }) : data = data ?? DateTime.now();
+  double get valorTotal => quantidadeCaixa * valorCaixa;
+
 }

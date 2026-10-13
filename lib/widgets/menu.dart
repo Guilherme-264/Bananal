@@ -1,9 +1,33 @@
 import 'package:flutter/material.dart';
+import '../screans/Home.dart';
+import '../screans/venda/Vendas.dart';
 
 class menu extends StatelessWidget {
-  final VoidCallback onAdicionarPressed;
+  final VoidCallback? onAdicionarPressed;
+  final int itemAtivo; // 0 Financeiro, 1 Vendas, 2 Áreas, 3 Clima, 4 Agenda
 
-  menu({required this.onAdicionarPressed});
+  const menu({
+    super.key,
+    this.onAdicionarPressed,
+    this.itemAtivo = 0,
+  });
+
+  void _ir(BuildContext context, int indice) {
+    if (indice == itemAtivo) return; // já está nessa tela
+
+    Widget? tela;
+    if (indice == 0) tela = TelaHome();
+    if (indice == 1) tela = TelaVendas();
+    // 2, 3 e 4: adicione quando essas telas existirem
+
+    if (tela == null) return;
+
+    final destino = tela;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => destino),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -11,7 +35,7 @@ class menu extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.only(
+        borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(24),
           topRight: Radius.circular(24),
         ),
@@ -25,48 +49,39 @@ class menu extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          Expanded(child: _itemMenu(Icons.attach_money, 'Financeiro', ativo: true)),
-          Expanded(child: _itemMenu(Icons.location_on_outlined, 'Localização')),
-
-          GestureDetector(
-            onTap: onAdicionarPressed,
-            child: Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: Colors.green.shade800,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.add, color: Colors.white, size: 28),
-            ),
-          ),
-          Expanded(child: _itemMenu(Icons.cloud_outlined, "Clima")),
-          Expanded(child: _itemMenu(Icons.people_outline, "Pessoas")),
+          Expanded(child: _itemMenu(context, 0, Icons.attach_money, 'Financeiro')),
+          Expanded(child: _itemMenu(context, 1, Icons.local_shipping_outlined, 'Vendas')),
+          Expanded(child: _itemMenu(context, 2, Icons.location_on_outlined, 'Áreas')),
+          Expanded(child: _itemMenu(context, 3, Icons.cloud_outlined, 'Clima')),
+          Expanded(child: _itemMenu(context, 4, Icons.format_list_bulleted, 'Agenda')),
         ],
       ),
     );
-
-
-
   }
-  Widget _itemMenu(IconData icone, String texto, {bool ativo = false}) {
+
+  Widget _itemMenu(BuildContext context, int indice, IconData icone, String texto) {
+    final ativo = indice == itemAtivo;
     final cor = ativo ? Colors.green.shade800 : Colors.grey.shade600;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icone, color: cor),
-        SizedBox(height: 4),
-        Text(
-          texto,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: cor,
-            fontSize: 12,
-            fontWeight: ativo ? FontWeight.bold : FontWeight.normal,
+
+    return InkWell(
+      onTap: () => _ir(context, indice),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icone, color: cor),
+          const SizedBox(height: 4),
+          Text(
+            texto,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: cor,
+              fontSize: 12,
+              fontWeight: ativo ? FontWeight.bold : FontWeight.normal,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

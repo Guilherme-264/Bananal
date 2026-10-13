@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
-import '../services/venda_service.dart';
-import '../model/venda_model.dart';
-import '../widgets/cabecalho.dart';
+import '../../services/venda_service.dart';
+import '../../model/venda_model.dart';
+import '../../widgets/cabecalho.dart';
 
 
 class TelaCadastroVenda extends StatefulWidget {
+  final Venda? venda; // se vier preenchida, a tela funciona como EDIÇÃO
+
+  const TelaCadastroVenda({super.key, this.venda});
+
   @override
   _TelaCadastroVendaState createState() => _TelaCadastroVendaState();
 }
@@ -16,6 +20,22 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda>{
   final TextEditingController _valorCaixaController = TextEditingController();
 
   double _valorTotal = 0;
+  DateTime _dataVenda = DateTime.now(); // NOVO: data escolhida (começa em hoje)
+
+  @override
+  void initState() {
+    super.initState();
+    final v = widget.venda;
+    if (v != null) {
+      // edição: preenche os campos com os dados da venda
+      _compradorController.text = v.comprador;
+      _pesoCaixaController.text = v.pesoCaixa.toString();
+      _quantidadeCaixaController.text = v.quantidadeCaixa.toString();
+      _valorCaixaController.text = v.valorCaixa.toString();
+      _dataVenda = v.data;
+      _valorTotal = v.quantidadeCaixa * v.valorCaixa;
+    }
+  }
 
   void _calcularTotal() {
     final quantidade = int.tryParse(_quantidadeCaixaController.text) ?? 0;
@@ -24,15 +44,47 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda>{
       _valorTotal = quantidade * valorCaixa;
     });
   }
+
+  // NOVO: transforma a data em texto, tipo 23/09/2026
+  String _formatarData(DateTime d) {
+    return '${d.day.toString().padLeft(2, '0')}/'
+        '${d.month.toString().padLeft(2, '0')}/'
+        '${d.year}';
+  }
+
+  // NOVO: abre o calendário e guarda a data escolhida
+  Future<void> _escolherData() async {
+    final escolhida = await showDatePicker(
+      context: context,
+      initialDate: _dataVenda,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: ColorScheme.light(primary: Colors.green.shade800),
+        ),
+        child: child!,
+      ),
+    );
+    if (escolhida != null) {
+      setState(() => _dataVenda = escolhida);
+    }
+  }
+
   void _cadastrarVenda(){
     final novaVenda = Venda(
       comprador: _compradorController.text,
       pesoCaixa: int.parse(_pesoCaixaController.text),
       quantidadeCaixa: int.parse(_quantidadeCaixaController.text),
       valorCaixa: double.parse(_valorCaixaController.text),
+      data: _dataVenda, // NOVO
     );
-    VendaService.adicionar(novaVenda);
-    Navigator.pop(context);
+    if (widget.venda != null) {
+      VendaService.atualizar(widget.venda!, novaVenda); // edição
+    } else {
+      VendaService.adicionar(novaVenda); // cadastro novo
+    }
+    Navigator.pop(context, novaVenda);
   }
 
   @override
@@ -73,6 +125,33 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda>{
                         TextField(
                           controller: _compradorController,
                           decoration: _inputDecoration(),
+                        ),
+                        SizedBox(height: 16),
+
+                        // NOVO: campo de data
+                        _label("Data da venda"),
+                        InkWell(
+                          onTap: _escolherData,
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  _formatarData(_dataVenda),
+                                  style: TextStyle(fontSize: 16),
+                                ),
+                                Icon(Icons.calendar_today_outlined,
+                                    size: 20, color: Colors.grey.shade600),
+                              ],
+                            ),
+                          ),
                         ),
                         SizedBox(height: 16),
 
@@ -145,7 +224,7 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda>{
                     ),
                   ),
                   child: Text(
-                    "Cadastrar Venda",
+                    widget.venda != null ? "Salvar Alterações" : "Cadastrar Venda",
                     style: TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ),

@@ -9,6 +9,13 @@ class VendaService {
     return _venda;
   }
 
+  static void atualizar(Venda antiga, Venda nova) {
+    final indice = _venda.indexOf(antiga);
+    if (indice != -1) {
+      _venda[indice] = nova;
+    }
+  }
+
   static void adicionar(Venda venda){
     _venda.add(venda);
   }
