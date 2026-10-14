@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import '../../services/venda_service.dart';
 import '../../model/venda_model.dart';
@@ -80,7 +79,7 @@ class _TelaVerVendaState extends State<TelaVerVenda> {
   // ---------- Tela ----------
   @override
   Widget build(BuildContext context) {
-    final total = _venda.quantidadeCaixa * _venda.valorCaixa;
+    final classificacoes = _venda.classificacoes;
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
@@ -112,36 +111,17 @@ class _TelaVerVendaState extends State<TelaVerVenda> {
                         const SizedBox(height: 20),
                         _linha('Comprador', _venda.comprador),
                         _linha('Data da venda', _data(_venda.data)),
-                        _linha('Peso da caixa', '${_venda.pesoCaixa} kg'),
-                        _linha('Quantidade de caixas',
-                            '${_venda.quantidadeCaixa}'),
-                        _linha('Valor por caixa', _moeda(_venda.valorCaixa)),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 14),
-                          decoration: BoxDecoration(
-                            color: Colors.green.shade50,
-                            borderRadius: BorderRadius.circular(12),
+
+                        // Um bloco para cada classificação
+                        for (int i = 0; i < classificacoes.length; i++)
+                          _blocoClassificacao(
+                            i,
+                            classificacoes[i],
+                            mostrarTitulo: classificacoes.length > 1,
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Valor Total',
-                                style: TextStyle(color: Colors.green.shade800),
-                              ),
-                              Text(
-                                _moeda(total),
-                                style: TextStyle(
-                                  color: Colors.green.shade800,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+
+                        const SizedBox(height: 4),
+                        _resumoTotal(),
                       ],
                     ),
                   ),
@@ -192,6 +172,94 @@ class _TelaVerVendaState extends State<TelaVerVenda> {
     );
   }
 
+  // ---------- Bloco de UMA classificação ----------
+  Widget _blocoClassificacao(
+      int indice,
+      Classificacao c, {
+        required bool mostrarTitulo,
+      }) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (mostrarTitulo) ...[
+            Text(
+              'Classificação ${indice + 1}',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: Colors.green.shade800,
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          _linhaDupla('Peso da caixa', '${c.pesoCaixa} kg', 'Quantidade',
+              '${c.quantidadeCaixa} caixas'),
+          const SizedBox(height: 12),
+          _linhaDupla('Valor por caixa', _moeda(c.valorCaixa), 'Subtotal',
+              _moeda(c.valorTotal)),
+        ],
+      ),
+    );
+  }
+
+  // ---------- Resumo no final: total de caixas e valor total ----------
+  Widget _resumoTotal() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.green.shade50,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Total de caixas',
+                style: TextStyle(color: Colors.green.shade800),
+              ),
+              Text(
+                '${_venda.totalCaixas}',
+                style: TextStyle(
+                  color: Colors.green.shade800,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Valor Total',
+                style: TextStyle(color: Colors.green.shade800),
+              ),
+              Text(
+                _moeda(_venda.valorTotal),
+                style: TextStyle(
+                  color: Colors.green.shade800,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   // Uma linha "rótulo em cima, valor embaixo"
   Widget _linha(String rotulo, String valor) {
     return Padding(
@@ -210,6 +278,36 @@ class _TelaVerVendaState extends State<TelaVerVenda> {
           ),
         ],
       ),
+    );
+  }
+
+  // Dois itens lado a lado (usado dentro do bloco de classificação)
+  Widget _linhaDupla(
+      String rotulo1, String valor1, String rotulo2, String valor2) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: _item(rotulo1, valor1)),
+        const SizedBox(width: 12),
+        Expanded(child: _item(rotulo2, valor2)),
+      ],
+    );
+  }
+
+  Widget _item(String rotulo, String valor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          rotulo,
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          valor,
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+        ),
+      ],
     );
   }
 }

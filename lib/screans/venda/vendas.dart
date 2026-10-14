@@ -226,7 +226,7 @@ class _TelaVendasState extends State<TelaVendas> {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    '${_data(venda.data)}  •  ${venda.quantidadeCaixa} caixas',
+                    '${_data(venda.data)}  •  ${venda.totalCaixas} caixas',
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
                 ],

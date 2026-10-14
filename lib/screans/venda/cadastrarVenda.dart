@@ -3,6 +3,18 @@ import '../../services/venda_service.dart';
 import '../../model/venda_model.dart';
 import '../../widgets/cabecalho.dart';
 
+/// Guarda os 3 campos de UMA classificação (peso, quantidade e valor da caixa).
+class _CamposClassificacao {
+  final TextEditingController peso = TextEditingController();
+  final TextEditingController quantidade = TextEditingController();
+  final TextEditingController valor = TextEditingController();
+
+  void dispose() {
+    peso.dispose();
+    quantidade.dispose();
+    valor.dispose();
+  }
+}
 
 class TelaCadastroVenda extends StatefulWidget {
   final Venda? venda; // se vier preenchida, a tela funciona como EDIÇÃO
@@ -13,46 +25,75 @@ class TelaCadastroVenda extends StatefulWidget {
   _TelaCadastroVendaState createState() => _TelaCadastroVendaState();
 }
 
-class _TelaCadastroVendaState extends State<TelaCadastroVenda>{
+class _TelaCadastroVendaState extends State<TelaCadastroVenda> {
   final TextEditingController _compradorController = TextEditingController();
-  final TextEditingController _pesoCaixaController = TextEditingController();
-  final TextEditingController _quantidadeCaixaController = TextEditingController();
-  final TextEditingController _valorCaixaController = TextEditingController();
+  DateTime _dataVenda = DateTime.now();
 
-  double _valorTotal = 0;
-  DateTime _dataVenda = DateTime.now(); // NOVO: data escolhida (começa em hoje)
+  // Lista de classificações do formulário (sempre começa com 1)
+  final List<_CamposClassificacao> _grupos = [];
 
   @override
   void initState() {
     super.initState();
     final v = widget.venda;
+
     if (v != null) {
-      // edição: preenche os campos com os dados da venda
+      // EDIÇÃO: preenche os campos com os dados da venda
       _compradorController.text = v.comprador;
-      _pesoCaixaController.text = v.pesoCaixa.toString();
-      _quantidadeCaixaController.text = v.quantidadeCaixa.toString();
-      _valorCaixaController.text = v.valorCaixa.toString();
       _dataVenda = v.data;
-      _valorTotal = v.quantidadeCaixa * v.valorCaixa;
+
+      for (final c in v.classificacoes) {
+        final grupo = _CamposClassificacao();
+        grupo.peso.text = c.pesoCaixa.toString();
+        grupo.quantidade.text = c.quantidadeCaixa.toString();
+        grupo.valor.text = c.valorCaixa.toString();
+        _grupos.add(grupo);
+      }
+    }
+
+    // cadastro novo (ou venda sem classificação): começa com 1 grupo vazio
+    if (_grupos.isEmpty) {
+      _grupos.add(_CamposClassificacao());
     }
   }
 
-  void _calcularTotal() {
-    final quantidade = int.tryParse(_quantidadeCaixaController.text) ?? 0;
-    final valorCaixa = double.tryParse(_valorCaixaController.text) ?? 0;
-    setState(() {
-      _valorTotal = quantidade * valorCaixa;
-    });
+  @override
+  void dispose() {
+    _compradorController.dispose();
+    for (final g in _grupos) {
+      g.dispose();
+    }
+    super.dispose();
   }
 
-  // NOVO: transforma a data em texto, tipo 23/09/2026
+  // ---------- Cálculos e formatação ----------
+  /// Soma de todas as classificações (quantidade x valor da caixa)
+  double get _valorTotal {
+    double total = 0;
+    for (final g in _grupos) {
+      final quantidade = int.tryParse(g.quantidade.text) ?? 0;
+      final valor = double.tryParse(g.valor.text.replaceAll(',', '.')) ?? 0;
+      total += quantidade * valor;
+    }
+    return total;
+  }
+
   String _formatarData(DateTime d) {
     return '${d.day.toString().padLeft(2, '0')}/'
         '${d.month.toString().padLeft(2, '0')}/'
         '${d.year}';
   }
 
-  // NOVO: abre o calendário e guarda a data escolhida
+  String _moeda(num v) {
+    final partes = v.toStringAsFixed(2).split('.');
+    final inteiro = partes[0].replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+          (m) => '.',
+    );
+    return 'R\$ $inteiro,${partes[1]}';
+  }
+
+  // ---------- Ações ----------
   Future<void> _escolherData() async {
     final escolhida = await showDatePicker(
       context: context,
@@ -71,14 +112,57 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda>{
     }
   }
 
-  void _cadastrarVenda(){
-    final novaVenda = Venda(
-      comprador: _compradorController.text,
-      pesoCaixa: int.parse(_pesoCaixaController.text),
-      quantidadeCaixa: int.parse(_quantidadeCaixaController.text),
-      valorCaixa: double.parse(_valorCaixaController.text),
-      data: _dataVenda, // NOVO
+  void _adicionarClassificacao() {
+    setState(() => _grupos.add(_CamposClassificacao()));
+  }
+
+  void _removerClassificacao(int indice) {
+    if (_grupos.length <= 1) return; // sempre fica pelo menos uma
+    final removido = _grupos[indice];
+    setState(() => _grupos.removeAt(indice));
+    // descarta os controllers só depois que a tela foi redesenhada
+    WidgetsBinding.instance.addPostFrameCallback((_) => removido.dispose());
+  }
+
+  void _aviso(String mensagem) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(mensagem)),
     );
+  }
+
+  void _cadastrarVenda() {
+    final comprador = _compradorController.text.trim();
+    if (comprador.isEmpty) {
+      _aviso('Informe o comprador');
+      return;
+    }
+
+    // monta uma Classificacao para cada grupo do formulário
+    final classificacoes = <Classificacao>[];
+    for (int i = 0; i < _grupos.length; i++) {
+      final g = _grupos[i];
+      final peso = int.tryParse(g.peso.text);
+      final quantidade = int.tryParse(g.quantidade.text);
+      final valor = double.tryParse(g.valor.text.replaceAll(',', '.'));
+
+      if (peso == null || quantidade == null || valor == null) {
+        _aviso('Preencha todos os campos da classificação ${i + 1}');
+        return;
+      }
+
+      classificacoes.add(Classificacao(
+        pesoCaixa: peso,
+        quantidadeCaixa: quantidade,
+        valorCaixa: valor,
+      ));
+    }
+
+    final novaVenda = Venda(
+      comprador: comprador,
+      data: _dataVenda,
+      classificacoes: classificacoes,
+    );
+
     if (widget.venda != null) {
       VendaService.atualizar(widget.venda!, novaVenda); // edição
     } else {
@@ -87,9 +171,9 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda>{
     Navigator.pop(context, novaVenda);
   }
 
+  // ---------- Tela ----------
   @override
-
-  Widget build (BuildContext context){
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       body: SafeArea(
@@ -98,43 +182,41 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda>{
           child: Column(
             children: [
               Cabecalho(),
-
               Expanded(
                 child: SingleChildScrollView(
                   child: Container(
-                    padding: EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12, blurRadius: 8,
-                        )
+                      boxShadow: const [
+                        BoxShadow(color: Colors.black12, blurRadius: 8),
                       ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           "Detalhes da Venda",
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
                         ),
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
 
                         _label("Comprador"),
                         TextField(
                           controller: _compradorController,
                           decoration: _inputDecoration(),
                         ),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                        // NOVO: campo de data
                         _label("Data da venda"),
                         InkWell(
                           onTap: _escolherData,
                           borderRadius: BorderRadius.circular(10),
                           child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 14),
                             decoration: BoxDecoration(
                               color: Colors.grey.shade50,
                               borderRadius: BorderRadius.circular(10),
@@ -145,7 +227,7 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda>{
                               children: [
                                 Text(
                                   _formatarData(_dataVenda),
-                                  style: TextStyle(fontSize: 16),
+                                  style: const TextStyle(fontSize: 16),
                                 ),
                                 Icon(Icons.calendar_today_outlined,
                                     size: 20, color: Colors.grey.shade600),
@@ -153,36 +235,31 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda>{
                             ),
                           ),
                         ),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                        _label("Peso da caixa"),
-                        TextField(
-                          controller: _pesoCaixaController,
-                          keyboardType: TextInputType.number,
-                          decoration: _inputDecoration(sufixo: "kg"),
+                        // Um bloco de campos para cada classificação
+                        for (int i = 0; i < _grupos.length; i++)
+                          _blocoClassificacao(i),
+
+                        // Botão "Adicionar classificação"
+                        Center(
+                          child: TextButton(
+                            onPressed: _adicionarClassificacao,
+                            child: Text(
+                              "Adicionar classificação",
+                              style: TextStyle(
+                                color: Colors.green.shade800,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
                         ),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 8),
 
-                        _label("Quantidade de caixas"),
-                        TextField(
-                          controller: _quantidadeCaixaController,
-                          keyboardType: TextInputType.number,
-                          decoration: _inputDecoration(),
-                          onChanged: (_) => _calcularTotal(),
-                        ),
-                        SizedBox(height: 16),
-                        _label("Valor por caixa"),
-
-                        TextField(
-                          controller: _valorCaixaController,
-                          keyboardType: TextInputType.number,
-                          decoration: _inputDecoration(prefixo: "R\$"),
-                          onChanged: (_) => _calcularTotal(),
-                        ),
-                        SizedBox(height: 20),
-
+                        // Total de todas as classificações
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 14),
                           decoration: BoxDecoration(
                             color: Colors.green.shade50,
                             borderRadius: BorderRadius.circular(12),
@@ -195,7 +272,7 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda>{
                                 style: TextStyle(color: Colors.green.shade800),
                               ),
                               Text(
-                                "R\$ ${_valorTotal.toStringAsFixed(2)}",
+                                _moeda(_valorTotal),
                                 style: TextStyle(
                                   color: Colors.green.shade800,
                                   fontWeight: FontWeight.bold,
@@ -210,7 +287,7 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda>{
                   ),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
 
               SizedBox(
                 width: double.infinity,
@@ -218,14 +295,16 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda>{
                   onPressed: _cadastrarVenda,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green.shade800,
-                    padding: EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   child: Text(
-                    widget.venda != null ? "Salvar Alterações" : "Cadastrar Venda",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
+                    widget.venda != null
+                        ? "Salvar Alterações"
+                        : "Cadastrar Venda",
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ),
               ),
@@ -236,10 +315,76 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda>{
     );
   }
 
+  // ---------- Bloco de UMA classificação (peso, quantidade, valor) ----------
+  Widget _blocoClassificacao(int indice) {
+    final grupo = _grupos[indice];
+    final temVarias = _grupos.length > 1;
+
+    return Column(
+      key: ObjectKey(grupo),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Cabeçalho "Classificação 2" + botão remover (só quando há várias)
+        if (temVarias) ...[
+          if (indice > 0) ...[
+            Divider(color: Colors.grey.shade300),
+            const SizedBox(height: 8),
+          ],
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Classificação ${indice + 1}",
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green.shade800,
+                ),
+              ),
+              IconButton(
+                onPressed: () => _removerClassificacao(indice),
+                icon: Icon(Icons.delete_outline, color: Colors.red.shade700),
+                tooltip: "Remover classificação",
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+        ],
+
+        _label("Peso da caixa"),
+        TextField(
+          controller: grupo.peso,
+          keyboardType: TextInputType.number,
+          decoration: _inputDecoration(sufixo: "kg"),
+        ),
+        const SizedBox(height: 16),
+
+        _label("Quantidade de caixas"),
+        TextField(
+          controller: grupo.quantidade,
+          keyboardType: TextInputType.number,
+          decoration: _inputDecoration(),
+          onChanged: (_) => setState(() {}), // recalcula o total
+        ),
+        const SizedBox(height: 16),
+
+        _label("Valor por caixa"),
+        TextField(
+          controller: grupo.valor,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: _inputDecoration(prefixo: "R\$"),
+          onChanged: (_) => setState(() {}), // recalcula o total
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
   Widget _label(String texto) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
-      child: Text(texto, style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
+      child: Text(texto,
+          style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
     );
   }
 
@@ -253,7 +398,7 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda>{
         borderRadius: BorderRadius.circular(10),
         borderSide: BorderSide(color: Colors.grey.shade300),
       ),
-      contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
     );
   }
 }
