@@ -5,6 +5,8 @@ import '../../services/venda_service.dart';
 import '../../model/venda_model.dart';
 import 'cadastrarVenda.dart';
 import 'verVenda.dart';
+import 'package:intl/intl.dart';
+
 
 class TelaVendas extends StatefulWidget {
   @override
@@ -37,17 +39,9 @@ class _TelaVendasState extends State<TelaVendas> {
   }
 
   // ---------- Formatação ----------
-  String _data(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+  final _moeda = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+  final _data = DateFormat('dd/MM/yyyy');
 
-  String _moeda(num v) {
-    final partes = v.toStringAsFixed(2).split('.');
-    final inteiro = partes[0].replaceAllMapped(
-      RegExp(r'\B(?=(\d{3})+(?!\d))'),
-          (m) => '.',
-    );
-    return 'R\$ $inteiro,${partes[1]}';
-  }
 
   // ---------- Ações ----------
   Future<void> _escolherPeriodo() async {
@@ -173,7 +167,7 @@ class _TelaVendasState extends State<TelaVendas> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Período: ${_data(_periodo.start)} - ${_data(_periodo.end)}',
+                'Período: ${_data.format(_periodo.start)} - ${_data.format(_periodo.end)}',
                 style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
               ),
             ),
@@ -226,7 +220,7 @@ class _TelaVendasState extends State<TelaVendas> {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    '${_data(venda.data)}  •  ${venda.totalCaixas} caixas',
+                    '${_data.format(venda.data)}  •  ${venda.totalCaixas} caixas',
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
                 ],
@@ -234,7 +228,7 @@ class _TelaVendasState extends State<TelaVendas> {
             ),
             const SizedBox(width: 8),
             Text(
-              _moeda(venda.valorTotal),
+              _moeda.format(venda.valorTotal),
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w800,
