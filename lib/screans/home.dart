@@ -1,17 +1,14 @@
-import '../screans/venda/Vendas.dart';
-import '../services/despesa_service.dart';
 import 'package:flutter/material.dart';
+import 'venda/Vendas.dart';
+import '../services/despesa_service.dart';
 import '../services/venda_service.dart';
 import '../model/venda_model.dart';
 import '../model/despesa_model.dart';
 import 'venda/cadastrarVenda.dart';
 import '../widgets/cabecalho.dart';
 import '../widgets/menu.dart';
-import 'venda/cadastrarVenda.dart';
 import 'despesa/Despesa.dart';
 import 'package:intl/intl.dart';
-
-
 
 /// Um item da lista "Atividades Recentes" (pode ser venda ou despesa)
 class _Atividade {
@@ -46,6 +43,25 @@ class _TelaHomeState extends State<TelaHome> {
   final _moeda = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
   final _data = DateFormat('dd/MM/yyyy');
 
+  @override
+  void initState() {
+    super.initState();
+    // redesenha a Home sempre que vendas/despesas mudarem no Firestore
+    VendaService.vendas.addListener(_atualizar);
+    DespesaService.despesas.addListener(_atualizar);
+  }
+
+  @override
+  void dispose() {
+    VendaService.vendas.removeListener(_atualizar);
+    DespesaService.despesas.removeListener(_atualizar);
+    super.dispose();
+  }
+
+  void _atualizar() {
+    if (mounted) setState(() {});
+  }
+
   //------direcionar para venda---------
   void verVendas() {
     Navigator.push(
@@ -56,7 +72,6 @@ class _TelaHomeState extends State<TelaHome> {
     });
   }
 
-  //------direcionar para despesa---------
   void verDespesas() {
     Navigator.push(
       context,

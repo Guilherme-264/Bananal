@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
+import '../screans/authGate.dart';
 
 class Cabecalho extends StatelessWidget {
   final bool mostrarVoltar; // mostra o botão de voltar (padrão: não)
@@ -52,9 +54,49 @@ class Cabecalho extends StatelessWidget {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           Spacer(),
-          CircleAvatar(
-            radius: 20,
-            backgroundImage: AssetImage('assets/images/avatar.png'),
+          // Avatar com menu da conta (mostra o e-mail e o botão Sair)
+          PopupMenuButton<String>(
+            tooltip: 'Conta',
+            offset: const Offset(0, 48),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            onSelected: (valor) async {
+              if (valor == 'sair') {
+                await AuthService.sair();
+                if (!context.mounted) return;
+                // recomeça a pilha de telas pelo AuthGate, que mostra o Login
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => AuthGate()),
+                      (route) => false,
+                );
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem<String>(
+                enabled: false,
+                child: Text(
+                  AuthService.usuarioAtual?.email ?? 'Conta',
+                  style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                ),
+              ),
+              const PopupMenuDivider(),
+              PopupMenuItem<String>(
+                value: 'sair',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout, color: Colors.red.shade700, size: 20),
+                    const SizedBox(width: 10),
+                    const Text('Sair'),
+                  ],
+                ),
+              ),
+            ],
+            child: CircleAvatar(
+              radius: 20,
+              backgroundImage: AssetImage('assets/images/avatar.png'),
+            ),
           ),
         ],
       ),

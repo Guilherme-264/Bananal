@@ -1,7 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:bananal/screans/home.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'screans/authGate.dart';
+import 'services/venda_service.dart';
+import 'services/despesa_service.dart';
 
-void main() {
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  VendaService.iniciar();
+  DespesaService.iniciar();
   runApp(const MyApp());
 }
 
@@ -16,10 +28,11 @@ class MyApp extends StatelessWidget {
 
         colorScheme: .fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: TelaHome(),
+      home: AuthGate(),
     );
   }
 }
+
 
 
 
