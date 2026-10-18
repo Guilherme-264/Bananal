@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Despesa {
-  String? id; // id do documento no Firestore (null enquanto não foi salva)
+  String? id;
   final String nome;
   final double valor;
   final String descricao;

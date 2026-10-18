@@ -4,6 +4,7 @@ import 'firebase_options.dart';
 import 'screans/authGate.dart';
 import 'services/venda_service.dart';
 import 'services/despesa_service.dart';
+import 'services/atividade_service.dart';
 
 
 void main() async {
@@ -14,6 +15,7 @@ void main() async {
   );
   VendaService.iniciar();
   DespesaService.iniciar();
+  AtividadeService.iniciar();
   runApp(const MyApp());
 }
 
