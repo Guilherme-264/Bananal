@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../screans/Home.dart';
 import '../screans/venda/Vendas.dart';
 import '../screans/telaEmDesenvolvimento.dart';
+import '../screans/area/Area.dart';
 
 class menu extends StatelessWidget {
   final VoidCallback? onAdicionarPressed;
@@ -20,7 +21,7 @@ class menu extends StatelessWidget {
     Widget? tela;
     if (indice == 0) tela = TelaHome();
     if (indice == 1) tela = TelaVendas();
-    if (indice == 2) tela = TelaEmDesenvolvimento(itemAtivo: 2, titulo: 'Áreas');
+    if (indice == 2) tela = TelaAreas();
     if (indice == 3) tela = TelaEmDesenvolvimento(itemAtivo: 3, titulo: 'Clima');
     if (indice == 4) tela = TelaAgenda();
 

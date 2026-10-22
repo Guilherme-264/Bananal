@@ -1,3 +1,4 @@
+import 'package:bananal/services/area_service.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -16,6 +17,7 @@ void main() async {
   VendaService.iniciar();
   DespesaService.iniciar();
   AtividadeService.iniciar();
+  AreaService.iniciar();
   runApp(const MyApp());
 }
 
