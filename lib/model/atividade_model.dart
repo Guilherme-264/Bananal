@@ -1,13 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Atividade {
-  String ? id;
+  String? id;
   final String nome;
   final String descricao;
   final DateTime data;
   final bool concluida;
   final String horario;
 
+  /// Tipo de manejo: Adubação, Pulverização, Poda, Ensacamento ou Outro
+  final String tipo;
+
+  /// Id da área onde a atividade acontece (opcional)
+  final String? areaId;
 
   Atividade({
     this.id,
@@ -16,15 +21,19 @@ class Atividade {
     required this.data,
     required this.concluida,
     required this.horario,
+    this.tipo = 'Outro',
+    this.areaId,
   });
 
-  Map <String, dynamic> toMap(){
+  Map<String, dynamic> toMap() {
     return {
       'nome': nome,
       'descricao': descricao,
       'data': Timestamp.fromDate(data),
       'concluida': concluida,
       'horario': horario,
+      'tipo': tipo,
+      'areaId': areaId,
     };
   }
 
@@ -36,6 +45,9 @@ class Atividade {
       data: (map['data'] as Timestamp?)?.toDate() ?? DateTime.now(),
       concluida: map['concluida'] as bool? ?? false,
       horario: map['horario'] as String? ?? '',
+      // atividades antigas não têm tipo nem área
+      tipo: map['tipo'] as String? ?? 'Outro',
+      areaId: map['areaId'] as String?,
     );
   }
 }

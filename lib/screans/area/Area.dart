@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import '../../model/area_model.dart';
+import '../../model/atividade_model.dart';
+import '../../model/tipoManejo_model.dart';
 import '../../services/area_service.dart';
+import '../../services/atividade_service.dart';
 import '../../widgets/cabecalho.dart';
 import '../../widgets/menu.dart';
 import '../../widgets/mapa_area.dart';
 import 'cadastrarArea.dart';
+import 'historicoManejo.dart';
 
 class TelaAreas extends StatefulWidget {
   @override
@@ -15,6 +19,7 @@ class TelaAreas extends StatefulWidget {
 
 class _TelaAreasState extends State<TelaAreas> {
   final _formatoHectares = NumberFormat('#,##0.00', 'pt_BR');
+  final _formatoData = DateFormat('dd/MM/yyyy');
 
   // Área que está sendo mostrada (se null, mostra a primeira da lista)
   String? _areaSelecionadaId;
@@ -24,11 +29,13 @@ class _TelaAreasState extends State<TelaAreas> {
     super.initState();
     // redesenha a tela sempre que as áreas mudarem no Firestore
     AreaService.areas.addListener(_atualizar);
+    AtividadeService.atividades.addListener(_atualizar);
   }
 
   @override
   void dispose() {
     AreaService.areas.removeListener(_atualizar);
+    AtividadeService.atividades.removeListener(_atualizar);
     super.dispose();
   }
 
@@ -243,8 +250,196 @@ class _TelaAreasState extends State<TelaAreas> {
         ],
       ),
 
-      // TODO: "Resumo do Manejo" e "Próxima atividade" entram na próxima etapa.
+      const SizedBox(height: 16),
+      _cardResumoManejo(area),
     ];
+  }
+
+  // ---------- Resumo do manejo ----------
+  Widget _cardResumoManejo(Area area) {
+    // só as atividades desta área
+    final atividades =
+    AtividadeService.listar().where((a) => a.areaId == area.id).toList();
+
+    DateTime soData(DateTime d) => DateTime(d.year, d.month, d.day);
+
+    // última vez que cada tipo foi feito (só conta atividade concluída)
+    DateTime? ultimaVez(TipoManejo tipo) {
+      DateTime? ultima;
+      for (final a in atividades) {
+        if (a.concluida && a.tipo == tipo.nome) {
+          if (ultima == null || a.data.isAfter(ultima)) ultima = a.data;
+        }
+      }
+      return ultima;
+    }
+
+    // próxima atividade: a pendente mais cedo, de hoje em diante
+    final hoje = soData(DateTime.now());
+    final proximas = atividades
+        .where((a) => !a.concluida && !a.data.isBefore(hoje))
+        .toList()
+      ..sort((a, b) {
+        final porData = soData(a.data).compareTo(soData(b.data));
+        return porData != 0 ? porData : a.horario.compareTo(b.horario);
+      });
+    final proxima = proximas.isEmpty ? null : proximas.first;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 8),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.history, color: Colors.grey.shade700, size: 22),
+              const SizedBox(width: 8),
+              const Text(
+                'Resumo do Manejo',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          for (int i = 0; i < TipoManejo.resumo.length; i++) ...[
+            if (i > 0) Divider(height: 1, color: Colors.grey.shade200),
+            _linhaManejo(
+              TipoManejo.resumo[i],
+              ultimaVez(TipoManejo.resumo[i]),
+            ),
+          ],
+
+          const SizedBox(height: 4),
+          TextButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TelaHistoricoManejo(area: area),
+                ),
+              );
+            },
+            style: TextButton.styleFrom(padding: EdgeInsets.zero),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Ver histórico completo',
+                  style: TextStyle(color: Colors.green.shade800, fontSize: 13),
+                ),
+                Icon(Icons.chevron_right,
+                    size: 18, color: Colors.green.shade800),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          _caixaProximaAtividade(proxima),
+        ],
+      ),
+    );
+  }
+
+  Widget _linhaManejo(TipoManejo tipo, DateTime? data) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: Colors.green.shade50,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(tipo.icone, size: 16, color: Colors.green.shade800),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(tipo.nome, style: const TextStyle(fontSize: 15)),
+          ),
+          Text(
+            data == null ? '—' : _formatoData.format(data),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: data == null ? Colors.grey.shade400 : Colors.grey.shade800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _caixaProximaAtividade(Atividade? a) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.green.shade50,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'PRÓXIMA ATIVIDADE',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+              color: Colors.green.shade800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (a == null)
+            Text(
+              'Nenhuma atividade agendada para esta área',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+            )
+          else ...[
+            Row(
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade800,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(TipoManejo.iconeDe(a.tipo),
+                      size: 16, color: Colors.white),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    a.nome,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '${_formatoData.format(a.data)}  •  ${a.horario}',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   // ---------- Quando ainda não existe nenhuma área ----------

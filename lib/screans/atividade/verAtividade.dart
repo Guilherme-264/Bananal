@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../services/atividade_service.dart';
+import '../../services/area_service.dart';
 import '../../model/atividade_model.dart';
 import '../../widgets/cabecalho.dart';
 import '../../widgets/menu.dart';
@@ -45,6 +46,16 @@ class _TelaVerAtividadeState extends State<TelaVerAtividade> {
         return;
       }
     }
+  }
+
+  /// Nome da área desta atividade (null se não tiver área)
+  String? _nomeDaArea() {
+    final id = _atividade.areaId;
+    if (id == null) return null;
+    for (final area in AreaService.listar()) {
+      if (area.id == id) return area.nome;
+    }
+    return null;
   }
 
   // ---------- Ações ----------
@@ -145,6 +156,8 @@ class _TelaVerAtividadeState extends State<TelaVerAtividade> {
           ),
           const SizedBox(height: 16),
           _linhaInfo('Atividade', _atividade.nome),
+          _linhaInfo('Tipo', _atividade.tipo),
+          _linhaInfo('Área', _nomeDaArea() ?? 'Sem área'),
           _linhaInfo('Data', _formatoData.format(_atividade.data)),
           _linhaInfo('Horário', _atividade.horario),
           const SizedBox(height: 4),

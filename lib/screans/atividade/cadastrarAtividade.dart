@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../services/atividade_service.dart';
+import '../../services/area_service.dart';
 import '../../model/atividade_model.dart';
+import '../../model/tipoManejo_model.dart';
 import '../../widgets/cabecalho.dart';
 
 class TelaCadastroAtividade extends StatefulWidget {
@@ -20,6 +22,8 @@ class _TelaCadastroAtividadeState extends State<TelaCadastroAtividade> {
 
   DateTime _data = DateTime.now();
   TimeOfDay _horario = const TimeOfDay(hour: 8, minute: 0);
+  String _tipo = TipoManejo.adubacao.nome;
+  String? _areaId; // null = sem área
 
   @override
   void initState() {
@@ -30,6 +34,12 @@ class _TelaCadastroAtividadeState extends State<TelaCadastroAtividade> {
       _nomeController.text = a.nome;
       _descricaoController.text = a.descricao;
       _data = a.data;
+      _areaId = a.areaId;
+
+      // se o tipo guardado não existir mais na lista, vira "Outro"
+      _tipo = TipoManejo.todos.any((t) => t.nome == a.tipo)
+          ? a.tipo
+          : TipoManejo.outro.nome;
 
       // o horário é guardado como texto "08:00"
       final partes = a.horario.split(':');
@@ -96,18 +106,15 @@ class _TelaCadastroAtividadeState extends State<TelaCadastroAtividade> {
     }
   }
 
-  void _aviso(String mensagem) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mensagem)),
-    );
-  }
-
   void _salvar() {
-    final nome = _nomeController.text.trim();
-    if (nome.isEmpty) {
-      _aviso('Informe o nome da atividade');
-      return;
-    }
+    // se o nome ficar vazio, usa o próprio tipo ("Adubação")
+    final digitado = _nomeController.text.trim();
+    final nome = digitado.isEmpty ? _tipo : digitado;
+
+    // se a área escolhida foi apagada, a atividade fica sem área
+    final areaId = AreaService.listar().any((a) => a.id == _areaId)
+        ? _areaId
+        : null;
 
     final nova = Atividade(
       nome: nome,
@@ -116,6 +123,8 @@ class _TelaCadastroAtividadeState extends State<TelaCadastroAtividade> {
       horario: _horarioTexto(_horario),
       // na edição, mantém o estado atual (pendente ou concluída)
       concluida: widget.atividade?.concluida ?? false,
+      tipo: _tipo,
+      areaId: areaId,
     );
 
     if (widget.atividade != null) {
@@ -129,6 +138,11 @@ class _TelaCadastroAtividadeState extends State<TelaCadastroAtividade> {
   // ---------- Tela ----------
   @override
   Widget build(BuildContext context) {
+    final areas = AreaService.listar();
+
+    // só mostra como escolhida uma área que ainda existe
+    final areaValida = areas.any((a) => a.id == _areaId) ? _areaId : null;
+
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       body: SafeArea(
@@ -158,11 +172,54 @@ class _TelaCadastroAtividadeState extends State<TelaCadastroAtividade> {
                         ),
                         const SizedBox(height: 20),
 
+                        _label("Tipo de manejo"),
+                        _dropdown<String>(
+                          value: _tipo,
+                          onChanged: (novo) {
+                            if (novo != null) setState(() => _tipo = novo);
+                          },
+                          items: [
+                            for (final tipo in TipoManejo.todos)
+                              DropdownMenuItem<String>(
+                                value: tipo.nome,
+                                child: Row(
+                                  children: [
+                                    Icon(tipo.icone,
+                                        size: 20,
+                                        color: Colors.green.shade800),
+                                    const SizedBox(width: 10),
+                                    Text(tipo.nome),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
                         _label("Nome da atividade"),
                         TextField(
                           controller: _nomeController,
                           textCapitalization: TextCapitalization.sentences,
-                          decoration: _inputDecoration(),
+                          decoration: _inputDecoration(
+                              dica: "Opcional (se vazio, usa o tipo)"),
+                        ),
+                        const SizedBox(height: 16),
+
+                        _label("Área"),
+                        _dropdown<String?>(
+                          value: areaValida,
+                          onChanged: (novo) => setState(() => _areaId = novo),
+                          items: [
+                            const DropdownMenuItem<String?>(
+                              value: null,
+                              child: Text("Sem área"),
+                            ),
+                            for (final area in areas)
+                              DropdownMenuItem<String?>(
+                                value: area.id,
+                                child: Text(area.nome),
+                              ),
+                          ],
                         ),
                         const SizedBox(height: 16),
 
@@ -239,6 +296,32 @@ class _TelaCadastroAtividadeState extends State<TelaCadastroAtividade> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  /// Lista suspensa no mesmo estilo dos campos de texto
+  Widget _dropdown<T>({
+    required T value,
+    required List<DropdownMenuItem<T>> items,
+    required ValueChanged<T?> onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<T>(
+          value: value,
+          isExpanded: true,
+          items: items,
+          onChanged: onChanged,
+          borderRadius: BorderRadius.circular(12),
+          icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey.shade600),
         ),
       ),
     );

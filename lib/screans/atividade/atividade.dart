@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../services/atividade_service.dart';
+import '../../services/area_service.dart';
 import '../../model/atividade_model.dart';
 import '../../widgets/cabecalho.dart';
 import '../../widgets/menu.dart';
@@ -55,6 +56,21 @@ class _TelaAgendaState extends State<TelaAgenda> {
         builder: (context) => TelaCadastroAtividade(atividade: atividade),
       ),
     );
+  }
+
+  /// Nome da área de uma atividade (null se ela não tiver área)
+  String? _nomeDaArea(String? id) {
+    if (id == null) return null;
+    for (final area in AreaService.listar()) {
+      if (area.id == id) return area.nome;
+    }
+    return null;
+  }
+
+  /// "Talhão A  •  08:00" (o nome da área só aparece se a atividade tiver uma)
+  String _localEHorario(Atividade a) {
+    final area = _nomeDaArea(a.areaId);
+    return area == null ? a.horario : '$area  •  ${a.horario}';
   }
 
   /// Abre a tela de detalhes da atividade
@@ -332,7 +348,7 @@ class _TelaAgendaState extends State<TelaAgenda> {
             ),
             const SizedBox(height: 4),
             Text(
-              a.horario,
+              _localEHorario(a),
               style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
             ),
             if (a.descricao.isNotEmpty) ...[
@@ -393,7 +409,9 @@ class _TelaAgendaState extends State<TelaAgenda> {
   Widget _linhaAgrupada(Atividade a) {
     // "14:00" ou "14:00 • descrição"
     final detalhe =
-    a.descricao.isEmpty ? a.horario : '${a.horario}  •  ${a.descricao}';
+    a.descricao.isEmpty
+        ? _localEHorario(a)
+        : '${_localEHorario(a)}  •  ${a.descricao}';
 
     return InkWell(
       onTap: () => _abrirDetalhes(a),
