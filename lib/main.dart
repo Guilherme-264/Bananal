@@ -6,6 +6,7 @@ import 'screans/authGate.dart';
 import 'services/venda_service.dart';
 import 'services/despesa_service.dart';
 import 'services/atividade_service.dart';
+import 'services/localizacao_service.dart';
 
 
 void main() async {
@@ -18,6 +19,7 @@ void main() async {
   DespesaService.iniciar();
   AtividadeService.iniciar();
   AreaService.iniciar();
+  LocalizacaoService.iniciar();
   runApp(const MyApp());
 }
 

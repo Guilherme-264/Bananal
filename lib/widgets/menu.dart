@@ -1,4 +1,5 @@
 import 'package:bananal/screans/atividade/atividade.dart';
+import 'package:bananal/screans/clima/telaClima.dart';
 import 'package:flutter/material.dart';
 import '../screans/Home.dart';
 import '../screans/venda/Vendas.dart';
@@ -22,7 +23,7 @@ class menu extends StatelessWidget {
     if (indice == 0) tela = TelaHome();
     if (indice == 1) tela = TelaVendas();
     if (indice == 2) tela = TelaAreas();
-    if (indice == 3) tela = TelaEmDesenvolvimento(itemAtivo: 3, titulo: 'Clima');
+    if (indice == 3) tela = TelaClima();
     if (indice == 4) tela = TelaAgenda();
 
 
