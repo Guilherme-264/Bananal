@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../services/venda_service.dart';
+import '../../services/area_service.dart';
 import '../../model/venda_model.dart';
 import '../../widgets/cabecalho.dart';
 import 'cadastrarVenda.dart';
-import 'package:intl/intl.dart';
 
 class TelaVerVenda extends StatefulWidget {
   final Venda venda;
@@ -19,8 +19,26 @@ class _TelaVerVendaState extends State<TelaVerVenda> {
   late Venda _venda = widget.venda;
 
   // ---------- Formatação ----------
-  final _data = DateFormat('dd/MM/yyyy');
-  final _moeda = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+  String _data(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+
+  String _moeda(num v) {
+    final partes = v.toStringAsFixed(2).split('.');
+    final inteiro = partes[0].replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+          (m) => '.',
+    );
+    return 'R\$ $inteiro,${partes[1]}';
+  }
+
+  /// Nomes das áreas desta venda (ignora áreas que foram apagadas)
+  String _nomesDasAreas() {
+    final nomes = [
+      for (final area in AreaService.listar())
+        if (_venda.areasIds.contains(area.id)) area.nome,
+    ];
+    return nomes.isEmpty ? 'Não informada' : nomes.join(', ');
+  }
 
   // ---------- Ações ----------
   Future<void> _editar() async {
@@ -80,7 +98,7 @@ class _TelaVerVendaState extends State<TelaVerVenda> {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              Cabecalho(mostrarVoltar: true),
+              Cabecalho(),
               Expanded(
                 child: SingleChildScrollView(
                   child: Container(
@@ -102,7 +120,8 @@ class _TelaVerVendaState extends State<TelaVerVenda> {
                         ),
                         const SizedBox(height: 20),
                         _linha('Comprador', _venda.comprador),
-                        _linha('Data da venda', _data.format(_venda.data)),
+                        _linha('Data da venda', _data(_venda.data)),
+                        _linha('Áreas de origem', _nomesDasAreas()),
 
                         // Um bloco para cada classificação
                         for (int i = 0; i < classificacoes.length; i++)
@@ -196,8 +215,8 @@ class _TelaVerVendaState extends State<TelaVerVenda> {
           _linhaDupla('Peso da caixa', '${c.pesoCaixa} kg', 'Quantidade',
               '${c.quantidadeCaixa} caixas'),
           const SizedBox(height: 12),
-          _linhaDupla('Valor por caixa', _moeda.format(c.valorCaixa), 'Subtotal',
-              _moeda.format(c.valorTotal)),
+          _linhaDupla('Valor por caixa', _moeda(c.valorCaixa), 'Subtotal',
+              _moeda(c.valorTotal)),
         ],
       ),
     );
@@ -238,7 +257,7 @@ class _TelaVerVendaState extends State<TelaVerVenda> {
                 style: TextStyle(color: Colors.green.shade800),
               ),
               Text(
-                _moeda.format(_venda.valorTotal),
+                _moeda(_venda.valorTotal),
                 style: TextStyle(
                   color: Colors.green.shade800,
                   fontWeight: FontWeight.bold,

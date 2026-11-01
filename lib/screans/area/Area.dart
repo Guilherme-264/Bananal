@@ -6,6 +6,7 @@ import '../../model/atividade_model.dart';
 import '../../model/tipoManejo_model.dart';
 import '../../services/area_service.dart';
 import '../../services/atividade_service.dart';
+import '../../services/venda_service.dart';
 import '../../widgets/cabecalho.dart';
 import '../../widgets/menu.dart';
 import '../../widgets/mapa_area.dart';
@@ -30,12 +31,14 @@ class _TelaAreasState extends State<TelaAreas> {
     // redesenha a tela sempre que as áreas mudarem no Firestore
     AreaService.areas.addListener(_atualizar);
     AtividadeService.atividades.addListener(_atualizar);
+    VendaService.vendas.addListener(_atualizar);
   }
 
   @override
   void dispose() {
     AreaService.areas.removeListener(_atualizar);
     AtividadeService.atividades.removeListener(_atualizar);
+    VendaService.vendas.removeListener(_atualizar);
     super.dispose();
   }
 
@@ -274,6 +277,17 @@ class _TelaAreasState extends State<TelaAreas> {
       return ultima;
     }
 
+    // último corte: data da venda mais recente em que esta área foi marcada
+    // como origem da colheita
+    DateTime? ultimoCorte;
+    for (final v in VendaService.vendas.value) {
+      if (v.areasIds.contains(area.id)) {
+        if (ultimoCorte == null || v.data.isAfter(ultimoCorte)) {
+          ultimoCorte = v.data;
+        }
+      }
+    }
+
     // próxima atividade: a pendente mais cedo, de hoje em diante
     final hoje = soData(DateTime.now());
     final proximas = atividades
@@ -317,6 +331,13 @@ class _TelaAreasState extends State<TelaAreas> {
               ultimaVez(TipoManejo.resumo[i]),
             ),
           ],
+
+          // Corte: vem das vendas, não das atividades
+          Divider(height: 1, color: Colors.grey.shade200),
+          _linhaManejo(
+            const TipoManejo('Corte', Icons.agriculture_outlined),
+            ultimoCorte,
+          ),
 
           const SizedBox(height: 4),
           TextButton(

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../model/area_model.dart';
 import '../../model/atividade_model.dart';
-import '../../model/tipoManejo_model.dart';
+import '../../model/tipoManejo_model.dart ';
 import '../../services/atividade_service.dart';
 import '../../widgets/cabecalho.dart';
 

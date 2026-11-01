@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/venda_service.dart';
 import '../../model/venda_model.dart';
 import '../../services/cliente_service.dart';
+import '../../services/area_service.dart';
 import '../../model/cliente_model.dart';
 import '../../widgets/cabecalho.dart';
 
@@ -35,6 +36,9 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda> {
   static const String _outro = '__outro__';
   String? _compradorEscolhido; // nome escolhido na lista (ou _outro)
 
+  // Ids das áreas escolhidas (pode ser mais de uma, ou nenhuma)
+  final Set<String> _areasEscolhidas = {};
+
   // Lista de classificações do formulário (sempre começa com 1)
   final List<_CamposClassificacao> _grupos = [];
 
@@ -42,9 +46,11 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda> {
   void initState() {
     super.initState();
     ClienteService.clientes.addListener(_atualizar);
+    AreaService.areas.addListener(_atualizar);
     final v = widget.venda;
 
     if (v != null) {
+      _areasEscolhidas.addAll(v.areasIds);
       // EDIÇÃO: preenche os campos com os dados da venda
       _compradorController.text = v.comprador;
       _compradorEscolhido = v.comprador.isEmpty ? null : v.comprador;
@@ -68,6 +74,7 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda> {
   @override
   void dispose() {
     ClienteService.clientes.removeListener(_atualizar);
+    AreaService.areas.removeListener(_atualizar);
     _compradorController.dispose();
     for (final g in _grupos) {
       g.dispose();
@@ -146,6 +153,49 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda> {
             decoration: _inputDecoration(),
           ),
         ],
+      ],
+    );
+  }
+
+  // ---------- Áreas de origem (escolha múltipla) ----------
+  Widget _campoAreas() {
+    final areas = AreaService.listar();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _label("Áreas de origem"),
+        if (areas.isEmpty)
+          Text(
+            "Nenhuma área cadastrada. Cadastre áreas na aba Áreas "
+                "para ligá-las às vendas.",
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+          )
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              for (final area in areas)
+                FilterChip(
+                  label: Text(area.nome),
+                  selected: _areasEscolhidas.contains(area.id),
+                  selectedColor: Colors.green.shade100,
+                  checkmarkColor: Colors.green.shade800,
+                  onSelected: (marcada) {
+                    final id = area.id;
+                    if (id == null) return;
+                    setState(() {
+                      if (marcada) {
+                        _areasEscolhidas.add(id);
+                      } else {
+                        _areasEscolhidas.remove(id);
+                      }
+                    });
+                  },
+                ),
+            ],
+          ),
       ],
     );
   }
@@ -256,6 +306,11 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda> {
       comprador: comprador,
       data: _dataVenda,
       classificacoes: classificacoes,
+      // só guarda áreas que ainda existem (uma pode ter sido apagada)
+      areasIds: [
+        for (final a in AreaService.listar())
+          if (_areasEscolhidas.contains(a.id)) a.id!,
+      ],
     );
 
     if (widget.venda != null) {
@@ -299,6 +354,9 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda> {
                         const SizedBox(height: 20),
 
                         _campoComprador(),
+                        const SizedBox(height: 16),
+
+                        _campoAreas(),
                         const SizedBox(height: 16),
 
                         _label("Data da venda"),

@@ -38,11 +38,13 @@ class Venda {
   final String comprador;
   final DateTime data;
   final List<Classificacao> classificacoes;
+  final List<String> areasIds; // ids das áreas de onde foi colhido (0 ou mais)
 
   Venda({
     this.id,
     required this.comprador,
     required this.classificacoes,
+    this.areasIds = const [],
     DateTime? data,
   }) : data = data ?? DateTime.now();
 
@@ -59,6 +61,7 @@ class Venda {
       'comprador': comprador,
       'data': Timestamp.fromDate(data),
       'classificacoes': classificacoes.map((c) => c.toMap()).toList(),
+      'areasIds': areasIds,
     };
   }
 
@@ -70,6 +73,8 @@ class Venda {
       id: id,
       comprador: map['comprador'] as String? ?? '',
       data: (map['data'] as Timestamp?)?.toDate(),
+      // vendas antigas não têm esse campo: ficam sem áreas
+      areasIds: List<String>.from(map['areasIds'] as List<dynamic>? ?? []),
       classificacoes: lista
           .map((c) => Classificacao.fromMap(Map<String, dynamic>.from(c as Map)))
           .toList(),
