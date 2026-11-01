@@ -7,6 +7,7 @@ import 'services/venda_service.dart';
 import 'services/despesa_service.dart';
 import 'services/atividade_service.dart';
 import 'services/localizacao_service.dart';
+import 'services/cliente_service.dart';
 
 
 void main() async {
@@ -20,6 +21,7 @@ void main() async {
   AtividadeService.iniciar();
   AreaService.iniciar();
   LocalizacaoService.iniciar();
+  ClienteService.iniciar();
   runApp(const MyApp());
 }
 

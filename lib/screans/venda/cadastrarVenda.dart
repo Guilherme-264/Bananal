@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../services/venda_service.dart';
 import '../../model/venda_model.dart';
+import '../../services/cliente_service.dart';
+import '../../model/cliente_model.dart';
 import '../../widgets/cabecalho.dart';
 
 /// Guarda os 3 campos de UMA classificação (peso, quantidade e valor da caixa).
@@ -29,17 +31,23 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda> {
   final TextEditingController _compradorController = TextEditingController();
   DateTime _dataVenda = DateTime.now();
 
+  // Valor especial da lista: "Outro (digitar nome)"
+  static const String _outro = '__outro__';
+  String? _compradorEscolhido; // nome escolhido na lista (ou _outro)
+
   // Lista de classificações do formulário (sempre começa com 1)
   final List<_CamposClassificacao> _grupos = [];
 
   @override
   void initState() {
     super.initState();
+    ClienteService.clientes.addListener(_atualizar);
     final v = widget.venda;
 
     if (v != null) {
       // EDIÇÃO: preenche os campos com os dados da venda
       _compradorController.text = v.comprador;
+      _compradorEscolhido = v.comprador.isEmpty ? null : v.comprador;
       _dataVenda = v.data;
 
       for (final c in v.classificacoes) {
@@ -59,11 +67,87 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda> {
 
   @override
   void dispose() {
+    ClienteService.clientes.removeListener(_atualizar);
     _compradorController.dispose();
     for (final g in _grupos) {
       g.dispose();
     }
     super.dispose();
+  }
+
+  // ---------- Comprador (lista de clientes ou nome digitado) ----------
+  /// Redesenha quando a lista de clientes muda no Firestore
+  void _atualizar() {
+    if (mounted) setState(() {});
+  }
+
+  /// O que aparece escolhido na lista (null = nada escolhido ainda)
+  String? _selecaoDaLista(List<Cliente> clientes) {
+    final escolhido = _compradorEscolhido;
+    if (escolhido == null) return null;
+    if (escolhido == _outro) return _outro;
+    if (clientes.any((c) => c.nome == escolhido)) return escolhido;
+    // nome antigo que não está (mais) na lista de clientes: usa o campo de texto
+    return _outro;
+  }
+
+  /// Mostra o campo de texto quando não há clientes ou foi escolhido "Outro"
+  bool _digitandoNome(List<Cliente> clientes) {
+    return clientes.isEmpty || _selecaoDaLista(clientes) == _outro;
+  }
+
+  Widget _campoComprador() {
+    final clientes = ClienteService.clientes.value;
+    final digitando = _digitandoNome(clientes);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _label("Comprador"),
+        if (clientes.isNotEmpty)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selecaoDaLista(clientes),
+                isExpanded: true,
+                hint: Text(
+                  "Selecione o comprador",
+                  style: TextStyle(color: Colors.grey.shade500),
+                ),
+                borderRadius: BorderRadius.circular(12),
+                icon: Icon(Icons.keyboard_arrow_down,
+                    color: Colors.grey.shade600),
+                items: [
+                  for (final c in clientes)
+                    DropdownMenuItem<String>(
+                      value: c.nome,
+                      child: Text(c.nome),
+                    ),
+                  const DropdownMenuItem<String>(
+                    value: _outro,
+                    child: Text("Outro (digitar nome)"),
+                  ),
+                ],
+                onChanged: (novo) => setState(() => _compradorEscolhido = novo),
+              ),
+            ),
+          ),
+        if (digitando) ...[
+          if (clientes.isNotEmpty) const SizedBox(height: 10),
+          TextField(
+            controller: _compradorController,
+            textCapitalization: TextCapitalization.words,
+            decoration: _inputDecoration(),
+          ),
+        ],
+      ],
+    );
   }
 
   // ---------- Cálculos e formatação ----------
@@ -131,10 +215,21 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda> {
   }
 
   void _cadastrarVenda() {
-    final comprador = _compradorController.text.trim();
-    if (comprador.isEmpty) {
-      _aviso('Informe o comprador');
-      return;
+    final clientes = ClienteService.clientes.value;
+    final String comprador;
+    if (_digitandoNome(clientes)) {
+      comprador = _compradorController.text.trim();
+      if (comprador.isEmpty) {
+        _aviso('Informe o nome do comprador');
+        return;
+      }
+    } else {
+      final escolhido = _selecaoDaLista(clientes);
+      if (escolhido == null) {
+        _aviso('Escolha o comprador');
+        return;
+      }
+      comprador = escolhido;
     }
 
     // monta uma Classificacao para cada grupo do formulário
@@ -203,11 +298,7 @@ class _TelaCadastroVendaState extends State<TelaCadastroVenda> {
                         ),
                         const SizedBox(height: 20),
 
-                        _label("Comprador"),
-                        TextField(
-                          controller: _compradorController,
-                          decoration: _inputDecoration(),
-                        ),
+                        _campoComprador(),
                         const SizedBox(height: 16),
 
                         _label("Data da venda"),

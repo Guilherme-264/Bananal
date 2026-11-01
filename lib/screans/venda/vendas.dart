@@ -6,6 +6,7 @@ import '../../model/venda_model.dart';
 import 'cadastrarVenda.dart';
 import 'verVenda.dart';
 import 'package:intl/intl.dart';
+import 'cliente.dart';
 
 
 class TelaVendas extends StatefulWidget {
@@ -79,6 +80,35 @@ class _TelaVendasState extends State<TelaVendas> {
     });
   }
 
+  void _abrirClientes() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => TelaClientes()),
+    );
+  }
+
+  Widget _botaoVerClientes() {
+    return OutlinedButton.icon(
+      onPressed: _abrirClientes,
+      icon: Icon(Icons.people_outline, color: Colors.green.shade800),
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size.fromHeight(52),
+        side: BorderSide(color: Colors.green.shade800),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+      label: Text(
+        'Ver clientes',
+        style: TextStyle(
+          color: Colors.green.shade800,
+          fontSize: 15,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
   // ---------- Tela ----------
   @override
   Widget build(BuildContext context) {
@@ -104,11 +134,14 @@ class _TelaVendasState extends State<TelaVendas> {
                     _cardVenda(venda),
                     const SizedBox(height: 12),
                   ],
+                const SizedBox(height: 8),
+                _botaoVerClientes(),
               ],
             ),
           ),
         ],
       ),
+
       bottomNavigationBar: menu(
         itemAtivo: 1,
         onAdicionarPressed: _abrirCadastro,
@@ -259,4 +292,6 @@ class _TelaVendasState extends State<TelaVendas> {
       ),
     );
   }
+
+
 }
