@@ -206,7 +206,43 @@ class _TelaAgendaState extends State<TelaAgenda> {
       backgroundColor: Colors.grey.shade100,
       body: Column(
         children: [
-          Cabecalho(),
+          Cabecalho(
+            tituloAjuda: 'Como usar a Agenda',
+            ajuda: const [
+              ItemAjuda(
+                Icons.add_circle_outline,
+                'Nova atividade',
+                'Toque em "+ Nova atividade" para agendar um manejo. Escolha '
+                    'o tipo (adubação, pulverização, poda, ensacamento...), '
+                    'a área, a data e o horário.',
+              ),
+              ItemAjuda(
+                Icons.view_agenda_outlined,
+                'Como a lista é organizada',
+                'As atividades pendentes ficam separadas em Atrasadas, Hoje, '
+                    'Próximos 2 dias e Mais adiante. As concluídas ficam no '
+                    'final, em Concluídas.',
+              ),
+              ItemAjuda(
+                Icons.touch_app_outlined,
+                'Ver os detalhes',
+                'Toque em uma atividade para abrir os detalhes. Lá você '
+                    'marca como concluída, edita ou exclui.',
+              ),
+              ItemAjuda(
+                Icons.bolt_outlined,
+                'Atalho',
+                'Segure o dedo em uma atividade para abrir o menu rápido: '
+                    'concluir (ou reabrir), editar ou excluir.',
+              ),
+              ItemAjuda(
+                Icons.history,
+                'Ligação com as Áreas',
+                'Ao concluir uma atividade ligada a uma área, a data dela '
+                    'aparece no Resumo do Manejo da tela Áreas.',
+              ),
+            ],
+          ),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(16),

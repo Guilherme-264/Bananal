@@ -8,6 +8,8 @@ import 'services/despesa_service.dart';
 import 'services/atividade_service.dart';
 import 'services/localizacao_service.dart';
 import 'services/cliente_service.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
 
 
 void main() async {
@@ -32,6 +34,15 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('pt', 'BR'),
+      ],
+      locale: const Locale('pt', 'BR'), // força português
       theme: ThemeData(
 
         colorScheme: .fromSeed(seedColor: Colors.deepPurple),

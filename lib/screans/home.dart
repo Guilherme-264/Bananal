@@ -161,7 +161,36 @@ class _TelaHomeState extends State<TelaHome> {
       backgroundColor: Colors.grey.shade100,
       body: Column(
         children: [
-          Cabecalho(),
+          Cabecalho(
+            tituloAjuda: 'Como usar o Financeiro',
+            ajuda: const [
+              ItemAjuda(
+                Icons.calendar_today_outlined,
+                'Período',
+                'Toque na caixa do período no topo para escolher as datas. '
+                    'Saldo, receita, despesa e atividades recentes mostram só '
+                    'esse intervalo.',
+              ),
+              ItemAjuda(
+                Icons.account_balance_wallet_outlined,
+                'Saldo, receita e despesa',
+                'O saldo é a receita (vendas) menos as despesas do período. '
+                    'Toque em Receita para abrir as vendas, ou em Despesa '
+                    'para abrir as despesas.',
+              ),
+              ItemAjuda(
+                Icons.trending_up,
+                'Atividades recentes',
+                'Mostra as últimas vendas e despesas do período escolhido.',
+              ),
+              ItemAjuda(
+                Icons.menu,
+                'Menu de baixo',
+                'Use Vendas, Áreas, Clima e Agenda para trocar de tela. '
+                    'O botão de adicionar cadastra uma nova venda.',
+              ),
+            ],
+          ),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(16),

@@ -166,7 +166,50 @@ class _TelaAreasState extends State<TelaAreas> {
       backgroundColor: Colors.grey.shade100,
       body: Column(
         children: [
-          Cabecalho(),
+          Cabecalho(
+            tituloAjuda: 'Como usar as Áreas',
+            ajuda: const [
+              ItemAjuda(
+                Icons.map_outlined,
+                'Mapa e tamanho',
+                'O mapa mostra o contorno da área escolhida, e abaixo do '
+                    'nome aparece o tamanho em hectares.',
+              ),
+              ItemAjuda(
+                Icons.swap_horiz,
+                'Ver outra área',
+                'Toque em "Ver outra área" para trocar a área mostrada ou '
+                    'para criar uma nova.',
+              ),
+              ItemAjuda(
+                Icons.more_vert,
+                'Editar ou excluir',
+                'No menu de três pontinhos ao lado do nome você edita o '
+                    'contorno e o nome da área, ou exclui a área.',
+              ),
+              ItemAjuda(
+                Icons.history,
+                'Resumo do Manejo',
+                'Mostra a data da última Adubação, Pulverização, Poda e '
+                    'Ensacamento concluídos nesta área. Eles vêm da Agenda: '
+                    'ao concluir uma atividade ligada à área, a data '
+                    'aparece aqui.',
+              ),
+              ItemAjuda(
+                Icons.agriculture_outlined,
+                'Corte',
+                'A data do último corte vem das Vendas: é a venda mais '
+                    'recente em que esta área foi marcada como origem.',
+              ),
+              ItemAjuda(
+                Icons.event_available_outlined,
+                'Próxima atividade e histórico',
+                'Mostra a próxima atividade pendente agendada para a área. '
+                    '"Ver histórico completo" lista tudo o que já foi '
+                    'concluído nela.',
+              ),
+            ],
+          ),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(16),

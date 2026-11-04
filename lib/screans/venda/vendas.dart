@@ -118,7 +118,36 @@ class _TelaVendasState extends State<TelaVendas> {
       backgroundColor: Colors.grey.shade100,
       body: Column(
         children: [
-          Cabecalho(),
+          Cabecalho(  tituloAjuda: 'Como usar as Vendas',
+        ajuda: const [
+          ItemAjuda(
+            Icons.add_circle_outline,
+            'Nova venda',
+            'Toque em "+ Nova Venda" para cadastrar. Escolha o comprador na lista '
+                '(ou digite o nome se não houver clientes), marque de quais áreas '
+                'foi colhido e preencha peso, quantidade e valor de cada '
+                'classificação. Dá para adicionar várias classificações.',
+          ),
+          ItemAjuda(
+            Icons.calendar_today_outlined,
+            'Período',
+            'Toque na caixa do período para escolher as datas. A lista mostra só '
+                'as vendas desse intervalo.',
+          ),
+          ItemAjuda(
+            Icons.receipt_long_outlined,
+            'Ver, editar ou excluir',
+            'Toque em uma venda da lista para ver os detalhes. Lá estão os botões '
+                'Editar Venda e Excluir Venda.',
+          ),
+          ItemAjuda(
+            Icons.people_outline,
+            'Clientes',
+            'Toque em "Ver clientes" para cadastrar, editar ou excluir os '
+                'compradores que aparecem na lista ao registrar uma venda.',
+          ),
+        ],
+      ),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(16),
