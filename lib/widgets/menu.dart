@@ -39,8 +39,12 @@ class menu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
+      padding: EdgeInsets.fromLTRB(
+        0,
+        12,
+        0,
+        12 + MediaQuery.of(context).padding.bottom,
+      ),      decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(24),

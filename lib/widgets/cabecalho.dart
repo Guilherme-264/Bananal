@@ -123,7 +123,14 @@ class Cabecalho extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      // o espaço da barra de notificações é somado aqui; nas telas que já
+      // usam SafeArea esse valor chega zerado, então não duplica
+      padding: EdgeInsets.fromLTRB(
+        16,
+        12 + MediaQuery.of(context).padding.top,
+        16,
+        12,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
