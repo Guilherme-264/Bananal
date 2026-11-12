@@ -7,6 +7,7 @@ import 'cadastrarVenda.dart';
 import 'verVenda.dart';
 import 'package:intl/intl.dart';
 import 'cliente.dart';
+import 'relatorioProducao.dart';
 
 
 class TelaVendas extends StatefulWidget {
@@ -165,6 +166,29 @@ class _TelaVendasState extends State<TelaVendas> {
                   ],
                 const SizedBox(height: 8),
                 _botaoVerClientes(),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const TelaRelatorioProducao(),
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.bar_chart, color: Colors.green.shade800),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: BorderSide(color: Colors.green.shade800),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  label: Text(
+                    'Ver relatório de produção',
+                    style: TextStyle(color: Colors.green.shade800),
+                  ),
+                ),
               ],
             ),
           ),

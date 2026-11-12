@@ -8,6 +8,7 @@ import 'venda/cadastrarVenda.dart';
 import '../widgets/cabecalho.dart';
 import '../widgets/menu.dart';
 import 'despesa/Despesa.dart';
+import 'venda/relatorioFinanceiro.dart';
 import 'package:intl/intl.dart';
 
 /// Um item da lista "Atividades Recentes" (pode ser venda ou despesa)
@@ -184,6 +185,12 @@ class _TelaHomeState extends State<TelaHome> {
                 'Mostra as últimas vendas e despesas do período escolhido.',
               ),
               ItemAjuda(
+                Icons.bar_chart,
+                'Relatório financeiro',
+                'Toque em "Ver relatório financeiro" para ver o resultado '
+                    'mês a mês de cada ano em um gráfico.',
+              ),
+              ItemAjuda(
                 Icons.menu,
                 'Menu de baixo',
                 'Use Vendas, Áreas, Clima e Agenda para trocar de tela. '
@@ -205,6 +212,29 @@ class _TelaHomeState extends State<TelaHome> {
                     const SizedBox(width: 12),
                     Expanded(child: _cardDespesa(despesa)),
                   ],
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const TelaRelatorioFinanceiro(),
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.bar_chart, color: Colors.green.shade800),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: BorderSide(color: Colors.green.shade800),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  label: Text(
+                    'Ver relatório financeiro',
+                    style: TextStyle(color: Colors.green.shade800),
+                  ),
                 ),
                 const SizedBox(height: 24),
                 const Text(
